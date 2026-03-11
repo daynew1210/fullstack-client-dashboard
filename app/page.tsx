@@ -7,12 +7,12 @@ export default function HomePage() {
         <p className="mt-2 text-gray-600">
           Manage leads, active clients, and completed projects in one place.
         </p>
-<Link
-  href="/clients"
-  className="mt-6 inline-block rounded-xl bg-black px-4 py-2 text-white hover:opacity-90"
->
-  View Clients
-</Link>
+          <Link
+           href="/clients"
+            className="mt-6 inline-block rounded-xl bg-black px-4 py-2 text-white hover:opacity-90"
+            >
+            View Clients
+          </Link>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl bg-white p-6 shadow">
             <h2 className="text-lg font-semibold">Total Clients</h2>
