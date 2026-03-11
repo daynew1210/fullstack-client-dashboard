@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const sampleClients = [
   {
     id: 1,
@@ -34,9 +36,12 @@ export default function ClientsPage() {
             </p>
           </div>
 
-          <button className="rounded-xl bg-black px-4 py-2 text-white hover:opacity-90">
-            Add Client
-          </button>
+          <Link
+             href="/clients/new"
+             className="rounded-xl bg-black px-4 py-2 text-white hover:opacity-90"
+            >
+             Add Client
+          </Link>
         </div>
 
         <div className="overflow-hidden rounded-2xl bg-white shadow">
