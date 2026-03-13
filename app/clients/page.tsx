@@ -1,30 +1,22 @@
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
-const sampleClients = [
-  {
-    id: 1,
-    name: "John Smith",
-    email: "john@example.com",
-    company: "Smith Services",
-    status: "Lead",
-  },
-  {
-    id: 2,
-    name: "Sarah Johnson",
-    email: "sarah@example.com",
-    company: "Johnson Media",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Mike Davis",
-    email: "mike@example.com",
-    company: "Davis Construction",
-    status: "Completed",
-  },
-];
+export const dynamic = "force-dynamic";
 
-export default function ClientsPage() {
+type Client = {
+  id: string;
+  name: string;
+  email: string | null;
+  company: string | null;
+  status: string | null;
+};
+
+export default async function ClientsPage() {
+  const { data: clients, error } = await supabase
+    .from("clients")
+    .select("id, name, email, company, status")
+    .order("created_at", { ascending: false });
+
   return (
     <main className="min-h-screen bg-gray-100 p-8">
       <div className="mx-auto max-w-5xl">
@@ -37,10 +29,10 @@ export default function ClientsPage() {
           </div>
 
           <Link
-             href="/clients/new"
-             className="rounded-xl bg-black px-4 py-2 text-white hover:opacity-90"
-            >
-             Add Client
+            href="/clients/new"
+            className="rounded-xl bg-black px-4 py-2 text-white hover:opacity-90"
+          >
+            Add Client
           </Link>
         </div>
 
@@ -48,25 +40,52 @@ export default function ClientsPage() {
           <table className="min-w-full text-left">
             <thead className="border-b bg-gray-50">
               <tr>
-                <th className="px-6 py-4 text-sm font-semibold text-gray-700">Name</th>
-                <th className="px-6 py-4 text-sm font-semibold text-gray-700">Email</th>
-                <th className="px-6 py-4 text-sm font-semibold text-gray-700">Company</th>
-                <th className="px-6 py-4 text-sm font-semibold text-gray-700">Status</th>
+                <th className="px-6 py-4 text-sm font-semibold text-gray-700">
+                  Name
+                </th>
+                <th className="px-6 py-4 text-sm font-semibold text-gray-700">
+                  Email
+                </th>
+                <th className="px-6 py-4 text-sm font-semibold text-gray-700">
+                  Company
+                </th>
+                <th className="px-6 py-4 text-sm font-semibold text-gray-700">
+                  Status
+                </th>
               </tr>
             </thead>
+
             <tbody>
-              {sampleClients.map((client) => (
-                <tr key={client.id} className="border-b last:border-b-0">
-                  <td className="px-6 py-4 text-gray-900">{client.name}</td>
-                  <td className="px-6 py-4 text-gray-600">{client.email}</td>
-                  <td className="px-6 py-4 text-gray-600">{client.company}</td>
-                  <td className="px-6 py-4">
-                    <span className="rounded-full bg-gray-200 px-3 py-1 text-sm text-gray-800">
-                      {client.status}
-                    </span>
+              {error ? (
+                <tr>
+                  <td className="px-6 py-4 text-red-600" colSpan={4}>
+                    Failed to load clients.
                   </td>
                 </tr>
-              ))}
+              ) : clients && clients.length > 0 ? (
+                clients.map((client: Client) => (
+                  <tr key={client.id} className="border-b last:border-b-0">
+                    <td className="px-6 py-4 text-gray-900">{client.name}</td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {client.email || "—"}
+                    </td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {client.company || "—"}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="rounded-full bg-gray-200 px-3 py-1 text-sm text-gray-800">
+                        {client.status || "—"}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td className="px-6 py-4 text-gray-600" colSpan={4}>
+                    No clients yet. Add your first client.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
