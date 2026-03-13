@@ -2,226 +2,141 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
 
-export default function EditClientPage() {
-  const router = useRouter();
+type Client = {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  company: string | null;
+  status: string | null;
+  notes: string | null;
+  created_at: string;
+};
+
+function getStatusClasses(status: string | null) {
+  switch (status) {
+    case "Lead":
+      return "bg-yellow-100 text-yellow-800";
+    case "Active":
+      return "bg-blue-100 text-blue-800";
+    case "Completed":
+      return "bg-green-100 text-green-800";
+    default:
+      return "bg-gray-200 text-gray-800";
+  }
+}
+
+export default function ClientDetailPage() {
   const params = useParams();
   const id = params.id as string;
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    company: "",
-    status: "Lead",
-    notes: "",
-  });
-
+  const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) {
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  }
-
-  async function loadClient() {
-    setLoading(true);
-    setErrorMessage("");
-
-    const { data, error } = await supabase
-      .from("clients")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      setErrorMessage(error.message);
-      setLoading(false);
-      return;
-    }
-
-    setFormData({
-      name: data.name || "",
-      email: data.email || "",
-      phone: data.phone || "",
-      company: data.company || "",
-      status: data.status || "Lead",
-      notes: data.notes || "",
-    });
-
-    setLoading(false);
-  }
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setSaving(true);
-    setErrorMessage("");
-
-    const { error } = await supabase
-      .from("clients")
-      .update({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        company: formData.company,
-        status: formData.status,
-        notes: formData.notes,
-      })
-      .eq("id", id);
-
-    setSaving(false);
-
-    if (error) {
-      setErrorMessage(error.message);
-      return;
-    }
-
-    router.push("/clients");
-    router.refresh();
-  }
-
   useEffect(() => {
+    async function fetchClient() {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) {
+        setErrorMessage(error.message);
+        setLoading(false);
+        return;
+      }
+
+      setClient(data);
+      setLoading(false);
+    }
+
     if (id) {
-      loadClient();
+      fetchClient();
     }
   }, [id]);
 
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-gray-100 p-8">
-        <div className="mx-auto max-w-3xl">
-          <p className="text-gray-600">Loading client...</p>
-        </div>
-      </main>
-    );
-  }
-
   return (
     <main className="min-h-screen bg-gray-100 p-8">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-4">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-6">
           <Link href="/clients" className="text-sm text-gray-600 hover:text-black">
             ← Back to Clients
           </Link>
         </div>
 
-        <h1 className="text-3xl font-bold text-gray-900">Edit Client</h1>
-
-        <p className="mt-2 text-gray-600">
-          Update this client record.
-        </p>
-
-        <form
-          onSubmit={handleSubmit}
-          className="mt-8 space-y-6 rounded-2xl bg-white p-6 shadow"
-        >
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Name
-            </label>
-            <input
-              name="name"
-              type="text"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="John Smith"
-              required
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-black"
-            />
+        {loading ? (
+          <div className="rounded-2xl bg-white p-6 shadow">
+            <p className="text-gray-600">Loading client...</p>
           </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="john@example.com"
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-black"
-            />
+        ) : errorMessage ? (
+          <div className="rounded-2xl bg-white p-6 shadow">
+            <p className="text-red-600">{errorMessage}</p>
           </div>
+        ) : client ? (
+          <div className="rounded-2xl bg-white p-6 shadow">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  {client.name}
+                </h1>
+                <p className="mt-2 text-gray-600">
+                  Client profile and project details.
+                </p>
+              </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Phone
-            </label>
-            <input
-              name="phone"
-              type="text"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="(555) 123-4567"
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-black"
-            />
+              <div className="flex gap-2">
+                <Link
+                  href={`/clients/${client.id}/edit`}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  Edit
+                </Link>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-xl bg-gray-50 p-4">
+                <p className="text-sm font-medium text-gray-500">Email</p>
+                <p className="mt-1 text-gray-900">{client.email || "—"}</p>
+              </div>
+
+              <div className="rounded-xl bg-gray-50 p-4">
+                <p className="text-sm font-medium text-gray-500">Phone</p>
+                <p className="mt-1 text-gray-900">{client.phone || "—"}</p>
+              </div>
+
+              <div className="rounded-xl bg-gray-50 p-4">
+                <p className="text-sm font-medium text-gray-500">Company</p>
+                <p className="mt-1 text-gray-900">{client.company || "—"}</p>
+              </div>
+
+              <div className="rounded-xl bg-gray-50 p-4">
+                <p className="text-sm font-medium text-gray-500">Status</p>
+                <div className="mt-2">
+                  <span
+                    className={`rounded-full px-3 py-1 text-sm ${getStatusClasses(
+                      client.status
+                    )}`}
+                  >
+                    {client.status || "—"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-xl bg-gray-50 p-4">
+              <p className="text-sm font-medium text-gray-500">Notes</p>
+              <p className="mt-2 whitespace-pre-wrap text-gray-900">
+                {client.notes || "No notes added yet."}
+              </p>
+            </div>
           </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Company
-            </label>
-            <input
-              name="company"
-              type="text"
-              value={formData.company}
-              onChange={handleChange}
-              placeholder="Smith Services"
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-black"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Status
-            </label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-black"
-            >
-              <option value="Lead">Lead</option>
-              <option value="Active">Active</option>
-              <option value="Completed">Completed</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Notes
-            </label>
-            <textarea
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              placeholder="Add any notes here..."
-              rows={4}
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-black"
-            />
-          </div>
-
-          {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
-
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-xl bg-black px-5 py-3 text-white hover:opacity-90 disabled:opacity-50"
-          >
-            {saving ? "Saving..." : "Update Client"}
-          </button>
-        </form>
+        ) : null}
       </div>
     </main>
   );

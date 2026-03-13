@@ -1,6 +1,41 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
+
+type Client = {
+  id: string;
+  status: string | null;
+};
 
 export default function HomePage() {
+  const [totalClients, setTotalClients] = useState(0);
+  const [activeProjects, setActiveProjects] = useState(0);
+  const [leads, setLeads] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchStats() {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("id, status");
+
+      if (!error && data) {
+        const clients = data as Client[];
+        setTotalClients(clients.length);
+        setActiveProjects(
+          clients.filter((client) => client.status === "Active").length
+        );
+        setLeads(clients.filter((client) => client.status === "Lead").length);
+      }
+
+      setLoading(false);
+    }
+
+    fetchStats();
+  }, []);
+
   return (
     <main className="min-h-screen bg-gray-100 p-8">
       <div className="mx-auto max-w-5xl">
@@ -20,17 +55,23 @@ export default function HomePage() {
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl bg-white p-6 shadow">
             <h2 className="text-lg font-semibold">Total Clients</h2>
-            <p className="mt-2 text-3xl font-bold">Track all records</p>
+            <p className="mt-2 text-3xl font-bold">
+              {loading ? "..." : totalClients}
+            </p>
           </div>
 
           <div className="rounded-2xl bg-white p-6 shadow">
             <h2 className="text-lg font-semibold">Active Projects</h2>
-            <p className="mt-2 text-3xl font-bold">Manage status</p>
+            <p className="mt-2 text-3xl font-bold">
+              {loading ? "..." : activeProjects}
+            </p>
           </div>
 
           <div className="rounded-2xl bg-white p-6 shadow">
             <h2 className="text-lg font-semibold">Leads</h2>
-            <p className="mt-2 text-3xl font-bold">Create and convert</p>
+            <p className="mt-2 text-3xl font-bold">
+              {loading ? "..." : leads}
+            </p>
           </div>
         </div>
       </div>

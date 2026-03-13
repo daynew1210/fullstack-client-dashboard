@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
 type Client = {
@@ -32,6 +32,7 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   async function fetchClients() {
     setLoading(true);
@@ -70,6 +71,26 @@ export default function ClientsPage() {
     fetchClients();
   }, []);
 
+  const filteredClients = useMemo(() => {
+    const value = searchTerm.toLowerCase().trim();
+
+    if (!value) return clients;
+
+    return clients.filter((client) => {
+      const name = client.name?.toLowerCase() || "";
+      const email = client.email?.toLowerCase() || "";
+      const company = client.company?.toLowerCase() || "";
+      const status = client.status?.toLowerCase() || "";
+
+      return (
+        name.includes(value) ||
+        email.includes(value) ||
+        company.includes(value) ||
+        status.includes(value)
+      );
+    });
+  }, [clients, searchTerm]);
+
   return (
     <main className="min-h-screen bg-gray-100 p-8">
       <div className="mx-auto max-w-6xl">
@@ -93,6 +114,19 @@ export default function ClientsPage() {
           >
             Add Client
           </Link>
+        </div>
+
+        <div className="mb-6 rounded-2xl bg-white p-4 shadow">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            Search Clients
+          </label>
+          <input
+            type="text"
+            placeholder="Search by name, email, company, or status..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-black"
+          />
         </div>
 
         <div className="overflow-hidden rounded-2xl bg-white shadow">
@@ -130,16 +164,23 @@ export default function ClientsPage() {
                     {errorMessage}
                   </td>
                 </tr>
-              ) : clients.length === 0 ? (
+              ) : filteredClients.length === 0 ? (
                 <tr>
                   <td className="px-6 py-4 text-gray-600" colSpan={5}>
-                    No clients yet. Add your first client.
+                    No matching clients found.
                   </td>
                 </tr>
               ) : (
-                clients.map((client) => (
+                filteredClients.map((client) => (
                   <tr key={client.id} className="border-b last:border-b-0">
-                    <td className="px-6 py-4 text-gray-900">{client.name}</td>
+                    <td className="px-6 py-4 text-gray-900">
+                      <Link
+                        href={`/clients/${client.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {client.name}
+                      </Link>
+                    </td>
                     <td className="px-6 py-4 text-gray-600">
                       {client.email || "—"}
                     </td>
