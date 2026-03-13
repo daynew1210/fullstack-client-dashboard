@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "../../../lib/supabase";
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { supabase } from "../../../../lib/supabase";
 
-export default function NewClientPage() {
+export default function EditClientPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -17,7 +19,8 @@ export default function NewClientPage() {
     notes: "",
   });
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   function handleChange(
@@ -31,23 +34,52 @@ export default function NewClientPage() {
     }));
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function loadClient() {
     setLoading(true);
     setErrorMessage("");
 
-    const { error } = await supabase.from("clients").insert([
-      {
+    const { data, error } = await supabase
+      .from("clients")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      setErrorMessage(error.message);
+      setLoading(false);
+      return;
+    }
+
+    setFormData({
+      name: data.name || "",
+      email: data.email || "",
+      phone: data.phone || "",
+      company: data.company || "",
+      status: data.status || "Lead",
+      notes: data.notes || "",
+    });
+
+    setLoading(false);
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSaving(true);
+    setErrorMessage("");
+
+    const { error } = await supabase
+      .from("clients")
+      .update({
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         company: formData.company,
         status: formData.status,
         notes: formData.notes,
-      },
-    ]);
+      })
+      .eq("id", id);
 
-    setLoading(false);
+    setSaving(false);
 
     if (error) {
       setErrorMessage(error.message);
@@ -56,6 +88,22 @@ export default function NewClientPage() {
 
     router.push("/clients");
     router.refresh();
+  }
+
+  useEffect(() => {
+    if (id) {
+      loadClient();
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-gray-100 p-8">
+        <div className="mx-auto max-w-3xl">
+          <p className="text-gray-600">Loading client...</p>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -67,10 +115,10 @@ export default function NewClientPage() {
           </Link>
         </div>
 
-        <h1 className="text-3xl font-bold text-gray-900">Add New Client</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Edit Client</h1>
 
         <p className="mt-2 text-gray-600">
-          Create a new client record for your dashboard.
+          Update this client record.
         </p>
 
         <form
@@ -168,10 +216,10 @@ export default function NewClientPage() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={saving}
             className="rounded-xl bg-black px-5 py-3 text-white hover:opacity-90 disabled:opacity-50"
           >
-            {loading ? "Saving..." : "Save Client"}
+            {saving ? "Saving..." : "Update Client"}
           </button>
         </form>
       </div>

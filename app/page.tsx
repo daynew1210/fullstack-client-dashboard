@@ -4,9 +4,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-gray-100 p-8">
       <div className="mx-auto max-w-5xl">
-        <h1 className="text-4xl font-bold text-gray-900">
-          Client Dashboard
-        </h1>
+        <h1 className="text-4xl font-bold text-gray-900">Client Dashboard</h1>
 
         <p className="mt-2 text-gray-600">
           Manage leads, active clients, and completed projects in one place.
@@ -22,17 +20,17 @@ export default function HomePage() {
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl bg-white p-6 shadow">
             <h2 className="text-lg font-semibold">Total Clients</h2>
-            <p className="mt-2 text-3xl font-bold">0</p>
+            <p className="mt-2 text-3xl font-bold">Track all records</p>
           </div>
 
           <div className="rounded-2xl bg-white p-6 shadow">
             <h2 className="text-lg font-semibold">Active Projects</h2>
-            <p className="mt-2 text-3xl font-bold">0</p>
+            <p className="mt-2 text-3xl font-bold">Manage status</p>
           </div>
 
           <div className="rounded-2xl bg-white p-6 shadow">
             <h2 className="text-lg font-semibold">Leads</h2>
-            <p className="mt-2 text-3xl font-bold">0</p>
+            <p className="mt-2 text-3xl font-bold">Create and convert</p>
           </div>
         </div>
       </div>
