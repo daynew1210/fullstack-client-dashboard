@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
 type Client = {
@@ -12,6 +13,7 @@ type Client = {
   company: string | null;
   status: string | null;
   notes: string | null;
+  user_id: string | null;
   created_at: string;
 };
 
@@ -29,6 +31,8 @@ function getStatusClasses(status: string | null) {
 }
 
 export default function ClientsPage() {
+  const router = useRouter();
+
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -38,9 +42,22 @@ export default function ClientsPage() {
     setLoading(true);
     setErrorMessage("");
 
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      setClients([]);
+      setLoading(false);
+      router.push("/sign-in");
+      return;
+    }
+
     const { data, error } = await supabase
       .from("clients")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -57,7 +74,20 @@ export default function ClientsPage() {
     const confirmed = window.confirm("Delete this client?");
     if (!confirmed) return;
 
-    const { error } = await supabase.from("clients").delete().eq("id", id);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      router.push("/sign-in");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("clients")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id);
 
     if (error) {
       alert(error.message);
@@ -104,7 +134,7 @@ export default function ClientsPage() {
 
             <h1 className="text-3xl font-bold text-gray-900">Clients</h1>
             <p className="mt-1 text-gray-600">
-              View, edit, and manage your client list.
+              View, edit, and manage your private client list.
             </p>
           </div>
 

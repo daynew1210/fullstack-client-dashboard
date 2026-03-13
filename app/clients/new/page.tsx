@@ -33,8 +33,21 @@ export default function NewClientPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
     setLoading(true);
     setErrorMessage("");
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      setLoading(false);
+      setErrorMessage("You must be signed in.");
+      router.push("/sign-in");
+      return;
+    }
 
     const { error } = await supabase.from("clients").insert([
       {
@@ -44,6 +57,7 @@ export default function NewClientPage() {
         company: formData.company,
         status: formData.status,
         notes: formData.notes,
+        user_id: user.id,
       },
     ]);
 
